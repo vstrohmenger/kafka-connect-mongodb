@@ -29,7 +29,14 @@ public class SchemaUtils {
                     jsonMap.put(fieldName, struct.getInt16(fieldName));
                     break;
                 case INT64:
-                    jsonMap.put(fieldName, struct.getInt64(fieldName));
+                	if (!struct.getWithoutDefault(fieldName).getClass().getName().equals("java.util.Date"))
+                	{
+                		jsonMap.put(fieldName, struct.getInt64(fieldName));
+                	}
+                	else
+                	{
+                		jsonMap.put(fieldName, (java.util.Date)struct.getWithoutDefault(fieldName));
+                	}
                     break;
                 case FLOAT32:
                     jsonMap.put(fieldName, struct.getFloat32(fieldName));
