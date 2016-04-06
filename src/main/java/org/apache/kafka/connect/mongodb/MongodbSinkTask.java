@@ -131,10 +131,10 @@ public class MongodbSinkTask extends SinkTask {
                 }
 
                 //If we define an id name in configuration file, we define the field _id with the good value
-                long idValue;            
+                Object idValue;            
                 if (idFieldName != null)
                 {
-                	idValue = Long.parseLong(jsonMap.get(idFieldName).toString());
+                	idValue = jsonMap.get(idFieldName);
                 	//We delete the original field as we would add the value in _id 
                 	jsonMap.remove(idFieldName);
                 }

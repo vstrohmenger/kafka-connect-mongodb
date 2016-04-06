@@ -40,8 +40,6 @@ public class MongodbSinkTaskTest extends TestCase {
 	private OffsetStorageReader offsetStorageReader;
     private SinkTaskContext context;
 	private Map<String, String> sinkProperties;
-	private SchemaBuilder valueBuilder;
-	private SchemaBuilder keyBuilder;
 	
 	private MongodExecutable mongodExecutable;
     private MongodProcess mongod;
@@ -49,15 +47,20 @@ public class MongodbSinkTaskTest extends TestCase {
     private IMongodConfig mongodConfig;
     private MongoClient mongoClient;
 	
+    private SchemaBuilder getValueSchemaBuilder(Schema keySchema)
+    {
+    	return SchemaBuilder.struct().name("valueSchema")
+				.field("idt", keySchema)
+				.field("name", Schema.STRING_SCHEMA);
+    }
+    private SchemaBuilder getKeySchemaBuilder(Schema keySchema)
+    {
+    	return SchemaBuilder.struct().name("keySchema")
+				.field("idt",  keySchema);
+    }
     
 	@Override
     public void setUp() {
-		
-		valueBuilder=SchemaBuilder.struct().name("valueSchema")
-				.field("idt", Schema.INT32_SCHEMA)
-				.field("name", Schema.STRING_SCHEMA);
-		keyBuilder=SchemaBuilder.struct().name("keySchema")
-				.field("idt",  Schema.INT32_SCHEMA);
 		
 		try {
             super.setUp();
@@ -117,9 +120,9 @@ public class MongodbSinkTaskTest extends TestCase {
 		//Creation of the test data
 		String topic = "test1";
 		int partition = 1; 
-		Schema keySchema = keyBuilder.build();
+		Schema keySchema = getKeySchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object key=new Struct(keySchema).put("idt",10);
-		Schema valueSchema=valueBuilder.build();
+		Schema valueSchema=getValueSchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object value=new Struct(valueSchema)
 				.put("idt", 10)
 				.put("name", "John");
@@ -137,7 +140,43 @@ public class MongodbSinkTaskTest extends TestCase {
 		
 		Assert.assertNotNull(db.getCollection("sink1"));
 		Assert.assertTrue(db.getCollection("sink1").count()==1);
-		Assert.assertTrue(db.getCollection("sink1").find().first().getLong("_id")==10);
+		Assert.assertTrue(db.getCollection("sink1").find().first().get("_id", Integer.class)==10);
+		Assert.assertTrue(db.getCollection("sink1").find().first().getString("name").compareTo("John")==0);
+	}
+	
+	@Test
+    public void testInsertWithStringId() {
+		//Verification that the record as well been added.
+		MongoDatabase db = mongoClient.getDatabase("mydb");
+		if (db.getCollection("sink1")!=null)
+		{
+			db.getCollection("sink1").drop();
+		}
+		
+		//Creation of the test data
+		String topic = "test1";
+		int partition = 1; 
+		Schema keySchema = getKeySchemaBuilder(Schema.STRING_SCHEMA).build();
+		Object key=new Struct(keySchema).put("idt","monId");
+		Schema valueSchema=getValueSchemaBuilder(Schema.STRING_SCHEMA).build();
+		Object value=new Struct(valueSchema)
+				.put("idt", "monId")
+				.put("name", "John");
+		long offset=20;
+		
+        sinkProperties.put("ids", "test1#idt,test2#idt2,test3"); 
+		task.start(sinkProperties);
+		Collection<SinkRecord> newCollection = new ArrayList<SinkRecord>();
+		SinkRecord record = new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
+		newCollection.add(record);
+		
+		//Insertion of test data in Mongodb collection
+		task.put(newCollection);
+		
+		
+		Assert.assertNotNull(db.getCollection("sink1"));
+		Assert.assertTrue(db.getCollection("sink1").count()==1);
+		Assert.assertTrue(db.getCollection("sink1").find().first().get("_id", String.class).compareTo("monId")==0);
 		Assert.assertTrue(db.getCollection("sink1").find().first().getString("name").compareTo("John")==0);
 	}
 	
@@ -153,9 +192,9 @@ public class MongodbSinkTaskTest extends TestCase {
 		//Creation of the test data
 		String topic = "test1";
 		int partition = 1; 
-		Schema keySchema = keyBuilder.build();
+		Schema keySchema = getKeySchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object key=new Struct(keySchema);
-		Schema valueSchema=valueBuilder.build();
+		Schema valueSchema=getValueSchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object value=new Struct(valueSchema)
 				.put("idt", 10)
 				.put("name", "John");
@@ -190,9 +229,9 @@ public class MongodbSinkTaskTest extends TestCase {
 		//Creation of the test data
 		String topic = "test1";
 		int partition = 1; 
-		Schema keySchema = keyBuilder.build();
+		Schema keySchema = getKeySchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object key=new Struct(keySchema).put("idt",10);
-		Schema valueSchema=valueBuilder.build();
+		Schema valueSchema=getValueSchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object value=new Struct(valueSchema)
 				.put("idt", 10)
 				.put("name", "John");
@@ -222,7 +261,7 @@ public class MongodbSinkTaskTest extends TestCase {
 		MongoCollection<Document> collection = db.getCollection("sink1");
 		Assert.assertTrue(collection != null);
 		Assert.assertTrue(collection.find().first()!=null);
-		Assert.assertTrue(collection.find().first().getLong("_id")==10);
+		Assert.assertTrue(collection.find().first().get("_id", Integer.class)==10);
 		Assert.assertTrue(collection.find().first().getString("name").compareTo("James")==0);
 	}
 	
@@ -238,9 +277,9 @@ public class MongodbSinkTaskTest extends TestCase {
 		//Creation of the test data
 		String topic = "test1";
 		int partition = 1; 
-		Schema keySchema = keyBuilder.build();
+		Schema keySchema = getKeySchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object key=new Struct(keySchema).put("idt",10);
-		Schema valueSchema=valueBuilder.build();
+		Schema valueSchema=getValueSchemaBuilder(Schema.INT32_SCHEMA).build();
 		Object value=new Struct(valueSchema)
 				.put("idt", 10)
 				.put("name", "John");
