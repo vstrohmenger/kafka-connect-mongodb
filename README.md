@@ -106,6 +106,7 @@ bulk.size=100
 mongodb.database=databasetest
 mongodb.collections=mydb_test1,mydb_test2,mydb_test3
 topics=optionalprefix_mydb_test1,optionalprefix_mydb_test2,optionalprefix_mydb_test3
+ids=optionalprefix_mydb_test2#key_fieldname
 ```
 
 * **name**: name of the connector
@@ -117,5 +118,6 @@ topics=optionalprefix_mydb_test1,optionalprefix_mydb_test2,optionalprefix_mydb_t
 * **mongodb.database**: database to use
 * **mongodb.collections**: comma separated list of collections on which write the documents
 * **topics**: comma separated list of topics to write on Mongodb
+* **ids**:comma separated list of dash separated topics and ids. The id field would be use to fill the mongo _id field.
 
 The number of collections and the number of topics should be the same.
