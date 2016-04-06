@@ -3,6 +3,8 @@ package org.apache.kafka.connect.utils;
 import org.apache.kafka.connect.data.Field;
 import org.apache.kafka.connect.data.Schema;
 import org.apache.kafka.connect.data.Struct;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,12 +14,18 @@ import java.util.Map;
  * @author Andrea Patelli
  */
 public class SchemaUtils {
+	private final static Logger log = LoggerFactory.getLogger(SchemaUtils.class);
+	
     public static Map<String, Object> toJsonMap(Struct struct) {
         Map<String, Object> jsonMap = new HashMap<String, Object>(0);
         List<Field> fields = struct.schema().fields();
         for (Field field : fields) {
             String fieldName = field.name();
             Schema.Type fieldType = field.schema().type();
+            if (log!=null && struct!=null && struct.getWithoutDefault(fieldName)!=null)
+            {
+            	log.trace("Field type for field "+fieldName+" : "+struct.getWithoutDefault(fieldName).getClass().getName());
+            }
             switch (fieldType) {
                 case STRING:
                     jsonMap.put(fieldName, struct.getString(fieldName));

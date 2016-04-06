@@ -35,9 +35,12 @@ public class MongodbSinkTask extends SinkTask {
     private String collections;
     private String database;
     private String topics;
+    private String ids;
 
     private Map<String, MongoCollection> mapping;
+    private Map<String, String> mappingTopicKeys;
     private MongoDatabase db;
+    private MongoClient mongoClient ;
 
     @Override
     public String version() {
@@ -67,11 +70,25 @@ public class MongodbSinkTask extends SinkTask {
         host = map.get(MongodbSinkConnector.HOST);
         collections = map.get(MongodbSinkConnector.COLLECTIONS);
         topics = map.get(MongodbSinkConnector.TOPICS);
+        ids = map.get(MongodbSinkConnector.IDS);
 
         List<String> collectionsList = Arrays.asList(collections.split(","));
         List<String> topicsList = Arrays.asList(topics.split(","));
+        List<String> idsList = Arrays.asList(ids.split(","));
+        
+        //Foreach topic we can specify the key fieldname that will define the mongo _id field like this topicName#idFieldName,...
+        mappingTopicKeys = new HashMap<>();
+        for(int i=0;i<idsList.size();i++)
+        {
+        	String[] currentTopicDef = idsList.get(i).split("#");
+        	String topicName = currentTopicDef[0];
+        	String idFieldName = null;
+        	if (currentTopicDef.length>1)
+        		idFieldName = currentTopicDef[1]; 
+        	mappingTopicKeys.put(topicName, idFieldName);
+        }
 
-        MongoClient mongoClient = new MongoClient(host, port);
+        mongoClient = new MongoClient(host, port);
         db = mongoClient.getDatabase(database);
 
         mapping = new HashMap<>();
@@ -90,7 +107,17 @@ public class MongodbSinkTask extends SinkTask {
      */
     @Override
     public void put(Collection<SinkRecord> collection) {
+    	
         List<SinkRecord> records = new ArrayList<>(collection);
+        
+        String idFieldName = "";
+        if (records.size() > 0)
+        {
+        	//We take the first record of the collection to retrieve the primary key that will become the _id field
+        	SinkRecord firstRecord = records.get(0);
+        	idFieldName = mappingTopicKeys.get(firstRecord.topic());
+        }
+             
         for (int i = 0; i < records.size(); i++) {
             Map<String, List<WriteModel<Document>>> bulks = new HashMap<>();
 
@@ -103,14 +130,28 @@ public class MongodbSinkTask extends SinkTask {
                     bulks.put(topic, new ArrayList<WriteModel<Document>>());
                 }
 
-                Document newDocument = new Document(jsonMap)
-                        .append("_id", record.kafkaOffset());
+                //If we define an id name in configuration file, we define the field _id with the good value
+                long idValue;            
+                if (idFieldName != null)
+                {
+                	idValue = Long.parseLong(jsonMap.get(idFieldName).toString());
+                	//We delete the original field as we would add the value in _id 
+                	jsonMap.remove(idFieldName);
+                }
+                else
+                {
+                	//Else we take the kafka offset
+                	idValue = record.kafkaOffset();
+                }
+                Document newDocument = new Document(jsonMap);
+                newDocument = new Document(jsonMap)
+                        .append("_id", idValue);
 
                 log.trace("Adding to bulk: {}", newDocument.toString());
                 bulks.get(topic).add(new UpdateOneModel<Document>(
-                        Filters.eq("_id", record.kafkaOffset()),
+                        Filters.eq("_id", idValue),
                         new Document("$set", newDocument),
-                        new UpdateOptions().upsert(true)));
+                        new UpdateOptions().upsert(true)));  
             }
             i--;
             log.trace("Executing bulk");
@@ -131,6 +172,6 @@ public class MongodbSinkTask extends SinkTask {
 
     @Override
     public void stop() {
-
+    	mongoClient.close();
     }
 }

@@ -23,7 +23,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.powermock.api.easymock.PowerMock;
 
-import java.io.File;
 import java.util.*;
 
 /**
@@ -31,7 +30,7 @@ import java.util.*;
  */
 public class MongodbSourceTaskTest extends TestCase {
 
-    private static String REPLICATION_PATH = "/home/vagrant/mongo";
+    //private static String REPLICATION_PATH = "/home/vagrant/mongo";
     private MongodbSourceTask task;
     private SourceTaskContext context;
     private OffsetStorageReader offsetStorageReader;
@@ -57,27 +56,27 @@ public class MongodbSourceTaskTest extends TestCase {
         totalWrittenDocuments = 0;
         try {
             super.setUp();
-            mongodStarter = MongodStarter.getDefaultInstance();
+            /*mongodStarter = MongodStarter.getDefaultInstance();
             mongodConfig = new MongodConfigBuilder()
                     .version(Version.Main.V3_2)
                     .replication(new Storage(REPLICATION_PATH, "rs0", 1024))
-                    .net(new Net(12345, Network.localhostIsIPv6()))
+                    .net(new Net(27017, Network.localhostIsIPv6()))
                     .build();
             mongodExecutable = mongodStarter.prepare(mongodConfig);
-            mongod = mongodExecutable.start();
-            mongoClient = new MongoClient(new ServerAddress("localhost", 12345));
-            MongoDatabase adminDatabase = mongoClient.getDatabase("admin");
+            mongod = mongodExecutable.start();*/
+            mongoClient = new MongoClient(new ServerAddress("localhost", 27017));
+            /*MongoDatabase adminDatabase = mongoClient.getDatabase("admin");
 
             BasicDBObject replicaSetSetting = new BasicDBObject();
             replicaSetSetting.put("_id", "rs0");
             BasicDBList members = new BasicDBList();
             DBObject host = new BasicDBObject();
             host.put("_id", 0);
-            host.put("host", "127.0.0.1:12345");
+            host.put("host", "127.0.0.1:27017");
             members.add(host);
             replicaSetSetting.put("members", members);
             adminDatabase.runCommand(new BasicDBObject("isMaster", 1));
-            adminDatabase.runCommand(new BasicDBObject("replSetInitiate", replicaSetSetting));
+            adminDatabase.runCommand(new BasicDBObject("replSetInitiate", replicaSetSetting));*/
             MongoDatabase db = mongoClient.getDatabase("mydb");
             db.createCollection("test1");
             db.createCollection("test2");
@@ -94,7 +93,7 @@ public class MongodbSourceTaskTest extends TestCase {
 
         sourceProperties = new HashMap<>();
         sourceProperties.put("host", "localhost");
-        sourceProperties.put("port", Integer.toString(12345));
+        sourceProperties.put("port", Integer.toString(27017));
         sourceProperties.put("batch.size", Integer.toString(100));
         sourceProperties.put("schema.name", "schema");
         sourceProperties.put("topic.prefix", "prefix");
@@ -181,7 +180,7 @@ public class MongodbSourceTaskTest extends TestCase {
             mongod.stop();
             mongodExecutable.stop();
             System.out.println("DELETING OPLOG");
-            FileUtils.deleteDirectory(new File(REPLICATION_PATH));
+           // FileUtils.deleteDirectory(new File(REPLICATION_PATH));
         } catch (Exception e) {
         }
     }

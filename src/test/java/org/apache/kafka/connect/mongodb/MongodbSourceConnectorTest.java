@@ -27,7 +27,7 @@ public class MongodbSourceConnectorTest {
 
         sourceProperties = new HashMap<>();
         sourceProperties.put("host", "localhost");
-        sourceProperties.put("port", Integer.toString(12345));
+        sourceProperties.put("port", Integer.toString(27017));
         sourceProperties.put("batch.size", Integer.toString(100));
         sourceProperties.put("schema.name", "schema");
         sourceProperties.put("topic.prefix", "prefix");
@@ -42,7 +42,7 @@ public class MongodbSourceConnectorTest {
         List<Map<String, String>> taskConfigs = connector.taskConfigs(1);
         Assert.assertEquals(1, taskConfigs.size());
         Assert.assertEquals("localhost", taskConfigs.get(0).get("host"));
-        Assert.assertEquals("12345", taskConfigs.get(0).get("port"));
+        Assert.assertEquals("27017", taskConfigs.get(0).get("port"));
         Assert.assertEquals("100", taskConfigs.get(0).get("batch.size"));
         Assert.assertEquals("schema", taskConfigs.get(0).get("schema.name"));
         Assert.assertEquals("prefix", taskConfigs.get(0).get("topic.prefix"));
@@ -57,14 +57,14 @@ public class MongodbSourceConnectorTest {
         List<Map<String, String>> taskConfigs = connector.taskConfigs(2);
         Assert.assertEquals(2, taskConfigs.size());
         Assert.assertEquals("localhost", taskConfigs.get(0).get("host"));
-        Assert.assertEquals("12345", taskConfigs.get(0).get("port"));
+        Assert.assertEquals("27017", taskConfigs.get(0).get("port"));
         Assert.assertEquals("100", taskConfigs.get(0).get("batch.size"));
         Assert.assertEquals("schema", taskConfigs.get(0).get("schema.name"));
         Assert.assertEquals("prefix", taskConfigs.get(0).get("topic.prefix"));
         Assert.assertEquals("mydb.test1,mydb.test2", taskConfigs.get(0).get("databases"));
 
         Assert.assertEquals("localhost", taskConfigs.get(1).get("host"));
-        Assert.assertEquals("12345", taskConfigs.get(1).get("port"));
+        Assert.assertEquals("27017", taskConfigs.get(1).get("port"));
         Assert.assertEquals("100", taskConfigs.get(1).get("batch.size"));
         Assert.assertEquals("schema", taskConfigs.get(1).get("schema.name"));
         Assert.assertEquals("prefix", taskConfigs.get(1).get("topic.prefix"));
