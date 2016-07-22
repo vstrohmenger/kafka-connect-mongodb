@@ -28,6 +28,9 @@ public class MongodbSourceTask extends SourceTask {
     private Integer batchSize;
     private String topicPrefix;
     private List<String> databases;
+    private String userName;
+    private String AuthDatabase;
+    private String password;
     private static Map<String, Schema> schemas = null;
 
     private MongodbReader reader;

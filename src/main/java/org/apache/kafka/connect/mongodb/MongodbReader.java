@@ -23,6 +23,9 @@ public class MongodbReader {
     private List<String> dbs;
     private String host;
     private Integer port;
+    private String userName;
+    private String password;
+    private String authDatabase;
     private Map<Map<String, String>, Map<String, Object>> start;
 
     public MongodbReader(String host, Integer port, List<String> dbs, Map<Map<String, String>, Map<String, Object>> start) {
@@ -32,6 +35,14 @@ public class MongodbReader {
         this.dbs.addAll(dbs);
         this.start = start;
         this.messages = new ConcurrentLinkedQueue<>();
+    }
+    public MongodbReader(String host, Integer port, String userName, String authDatabase, String password, List<String> dbs, Map<Map<String, String>, Map<String, Object>> start)
+    {
+    	this(host, port, dbs, start);
+    	this.userName = userName;
+    	this.password = password;
+    	this.authDatabase = authDatabase;
+    	
     }
 
     public void run() {
@@ -51,7 +62,15 @@ public class MongodbReader {
             log.trace("db: {}", db);
             log.trace("start: {}", start);
             // start a new thread for reading mutation of the specific database
-            DatabaseReader reader = new DatabaseReader(host, port, db, start, messages);
+            DatabaseReader reader;
+            if (this.authDatabase == null || this.authDatabase == "")
+            {
+            	reader = new DatabaseReader(host, port, db, start, messages);
+            }
+            else
+            {
+            	reader = new DatabaseReader(host, port, db, userName, password, authDatabase, start, messages);
+            }
             new Thread(reader).start();
         }
     }

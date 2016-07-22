@@ -1,6 +1,9 @@
 package org.apache.kafka.connect.mongodb;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
@@ -36,6 +39,9 @@ public class MongodbSinkTask extends SinkTask {
     private String database;
     private String topics;
     private String ids;
+    private String userName;
+    private String AuthDatabase;
+    private String password;
 
     private Map<String, MongoCollection> mapping;
     private Map<String, String> mappingTopicKeys;
@@ -88,7 +94,16 @@ public class MongodbSinkTask extends SinkTask {
         	mappingTopicKeys.put(topicName, idFieldName);
         }
 
-        mongoClient = new MongoClient(host, port);
+        if (AuthDatabase == null || AuthDatabase == "")
+        {
+        	mongoClient = new MongoClient(host, port);
+        }
+        else
+        {
+	        List<MongoCredential> credentials = new ArrayList<>();
+	        credentials.add(MongoCredential.createCredential(userName, AuthDatabase, password.toCharArray()));
+	        mongoClient = new MongoClient(new ServerAddress(host, port), credentials);
+        }
         db = mongoClient.getDatabase(database);
 
         mapping = new HashMap<>();

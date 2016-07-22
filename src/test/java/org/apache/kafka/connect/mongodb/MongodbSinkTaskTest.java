@@ -58,6 +58,12 @@ public class MongodbSinkTaskTest extends TestCase {
     	return SchemaBuilder.struct().name("keySchema")
 				.field("idt",  keySchema);
     }
+    private SchemaBuilder getStructSchemaBuilder(Schema keySchema)
+    {
+    	return SchemaBuilder.struct().name("valueSchema")
+				.field("idt", keySchema)
+				.field("name",SchemaBuilder.array(Schema.STRING_SCHEMA).build());
+    }
     
 	@Override
     public void setUp() {
@@ -142,6 +148,42 @@ public class MongodbSinkTaskTest extends TestCase {
 		Assert.assertTrue(db.getCollection("sink1").count()==1);
 		Assert.assertTrue(db.getCollection("sink1").find().first().get("_id", Integer.class)==10);
 		Assert.assertTrue(db.getCollection("sink1").find().first().getString("name").compareTo("John")==0);
+	}
+	
+	@Test
+    public void testInsertWithStruct() {
+		//Verification that the record as well been added.
+		MongoDatabase db = mongoClient.getDatabase("mydb");
+		if (db.getCollection("sink1")!=null)
+		{
+			db.getCollection("sink1").drop();
+		}
+		
+		//Creation of the test data
+		String topic = "test1";
+		int partition = 1; 
+		Schema keySchema = getKeySchemaBuilder(Schema.INT32_SCHEMA).build();
+		Object key=new Struct(keySchema).put("idt",10);
+		Schema valueSchema=getStructSchemaBuilder(Schema.INT32_SCHEMA).build();
+		Object value=new Struct(valueSchema)
+				.put("idt", 10)
+				.put("name", new ArrayList<String>(){{add("1");add("3");add("5");add("7");add("9");}});
+		long offset=20;
+		
+        sinkProperties.put("ids", "test1#idt,test2#idt2,test3"); 
+		task.start(sinkProperties);
+		Collection<SinkRecord> newCollection = new ArrayList<SinkRecord>();
+		SinkRecord record = new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
+		newCollection.add(record);
+		
+		//Insertion of test data in Mongodb collection
+		task.put(newCollection);
+		
+		
+		Assert.assertNotNull(db.getCollection("sink1"));
+		Assert.assertTrue(db.getCollection("sink1").count()==1);
+		Assert.assertTrue(db.getCollection("sink1").find().first().get("_id", Integer.class)==10);
+		Assert.assertTrue(db.getCollection("sink1").find().first().get("name", ArrayList.class).size()==5);
 	}
 	
 	@Test

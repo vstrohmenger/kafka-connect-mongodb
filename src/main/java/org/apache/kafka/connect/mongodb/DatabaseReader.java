@@ -2,6 +2,8 @@ package org.apache.kafka.connect.mongodb;
 
 import com.mongodb.CursorType;
 import com.mongodb.MongoClient;
+import com.mongodb.MongoCredential;
+import com.mongodb.ServerAddress;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -14,6 +16,8 @@ import org.bson.types.BSONTimestamp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -27,6 +31,9 @@ public class DatabaseReader implements Runnable {
     private Integer port;
     private String db;
     private String start;
+    private String userName;
+    private String password;
+    private String authDatabase;
 
     private ConcurrentLinkedQueue<Document> messages;
 
@@ -45,6 +52,13 @@ public class DatabaseReader implements Runnable {
             throw e;
         }
         log.trace("Starting from {}", start);
+    }
+    
+    public DatabaseReader(String host, Integer port, String db, String userName, String password, String authDatabase, String start, ConcurrentLinkedQueue<Document> messages) {
+    	this(host, port, db, start, messages);
+    	this.userName = userName;
+    	this.password = password;
+    	this.authDatabase = authDatabase;
     }
 
     public void run() {
@@ -81,7 +95,17 @@ public class DatabaseReader implements Runnable {
      * @return the oplog collection
      */
     private MongoCollection readCollection() {
-        MongoClient mongoClient = new MongoClient(host, port);
+        MongoClient mongoClient;
+        if (this.authDatabase == null || this.authDatabase == "")
+    	{
+        	mongoClient = new MongoClient(host, port);
+    	}
+        else
+        {
+        	List<MongoCredential> credentials = new ArrayList<>();
+	        credentials.add(MongoCredential.createCredential(userName, authDatabase, password.toCharArray()));
+	        mongoClient = new MongoClient(new ServerAddress(host, port), credentials);
+        }
         MongoDatabase db = mongoClient.getDatabase("local");
         return db.getCollection("oplog.rs");
     }

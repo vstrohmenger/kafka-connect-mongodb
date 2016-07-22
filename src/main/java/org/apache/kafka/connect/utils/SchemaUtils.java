@@ -37,7 +37,7 @@ public class SchemaUtils {
                     jsonMap.put(fieldName, struct.getInt16(fieldName));
                     break;
                 case INT64:
-                	if (!struct.getWithoutDefault(fieldName).getClass().getName().equals("java.util.Date"))
+                	if (struct == null || struct.getWithoutDefault(fieldName)==null || (!struct.getWithoutDefault(fieldName).getClass().getName().equals("java.util.Date")))
                 	{
                 		jsonMap.put(fieldName, struct.getInt64(fieldName));
                 	}
@@ -46,12 +46,35 @@ public class SchemaUtils {
                 		jsonMap.put(fieldName, (java.util.Date)struct.getWithoutDefault(fieldName));
                 	}
                     break;
+                case INT8:
+                	jsonMap.put(fieldName, struct.getInt8(fieldName));
+                	break;
                 case FLOAT32:
                     jsonMap.put(fieldName, struct.getFloat32(fieldName));
                     break;
                 case STRUCT:
                     jsonMap.put(fieldName, toJsonMap(struct.getStruct(fieldName)));
                     break;
+                case FLOAT64:
+                	jsonMap.put(fieldName, struct.getFloat64(fieldName));
+                    break;
+                case BYTES:
+                	log.error("toto : "+struct.getWithoutDefault(fieldName).getClass().getName());
+                	if (struct == null || struct.getWithoutDefault(fieldName)==null || (!struct.getWithoutDefault(fieldName).getClass().getName().equals("java.util.int8")))
+                	{
+                		jsonMap.put(fieldName, struct.getBytes(fieldName));
+                	}
+                	else
+                	{
+                		jsonMap.put(fieldName, struct.getBoolean(fieldName));
+                	}
+                	break;
+                case ARRAY:
+                	jsonMap.put(fieldName, struct.getArray(fieldName));
+                case MAP:
+                	jsonMap.put(fieldName, struct.getMap(fieldName));
+                default:
+                	log.error("Unknown field type : "+fieldType.getName());
             }
         }
         return jsonMap;

@@ -27,6 +27,9 @@ public class MongodbSourceConnector extends SourceConnector {
     public static final String BATCH_SIZE = "batch.size";
     public static final String TOPIC_PREFIX = "topic.prefix";
     public static final String DATABASES = "databases";
+    public static final String USERNAME = "userName";
+    public static final String AUTHDATABASE = "authDatabase";
+    public static final String PASSWORD = "password";
 
     private String port;
     private String host;
@@ -34,6 +37,9 @@ public class MongodbSourceConnector extends SourceConnector {
     private String batchSize;
     private String topicPrefix;
     private String databases;
+    private String userName;
+    private String AuthDatabase;
+    private String password;
 
     /**
      * Get the version of this connector.
@@ -75,6 +81,10 @@ public class MongodbSourceConnector extends SourceConnector {
 
         topicPrefix = map.get(TOPIC_PREFIX);
 
+        userName = map.get(USERNAME);
+        AuthDatabase = map.get(AUTHDATABASE);
+        password = map.get(PASSWORD);
+        
         LogUtils.dumpConfiguration(map, log);
     }
 
@@ -107,6 +117,9 @@ public class MongodbSourceConnector extends SourceConnector {
             config.put(SCHEMA_NAME, schemaName);
             config.put(BATCH_SIZE, batchSize);
             config.put(TOPIC_PREFIX, topicPrefix);
+            config.put(USERNAME, userName);
+            config.put(PASSWORD, password);
+            config.put(AUTHDATABASE, AuthDatabase);
             config.put(DATABASES, StringUtils.join(dbsGrouped.get(i), ","));
             configs.add(config);
         }
