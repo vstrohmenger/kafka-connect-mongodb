@@ -71,8 +71,10 @@ public class SchemaUtils {
                 	break;
                 case ARRAY:
                 	jsonMap.put(fieldName, struct.getArray(fieldName));
+                	break;
                 case MAP:
                 	jsonMap.put(fieldName, struct.getMap(fieldName));
+                	break;
                 default:
                 	log.error("Unknown field type : "+fieldType.getName());
             }

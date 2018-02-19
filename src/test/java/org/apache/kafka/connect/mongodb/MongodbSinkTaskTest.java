@@ -170,7 +170,7 @@ public class MongodbSinkTaskTest extends TestCase {
 				.put("name", new ArrayList<String>(){{add("1");add("3");add("5");add("7");add("9");}});
 		long offset=20;
 		
-        sinkProperties.put("ids", "test1#idt,test2#idt2,test3"); 
+        sinkProperties.put("ids", "test1#idt"); 
 		task.start(sinkProperties);
 		Collection<SinkRecord> newCollection = new ArrayList<SinkRecord>();
 		SinkRecord record = new SinkRecord(topic, partition, keySchema, key, valueSchema, value, offset);
